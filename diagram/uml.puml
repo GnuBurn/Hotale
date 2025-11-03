@@ -1,7 +1,7 @@
 @startuml
 
 skinparam classAttributeIconSize 0
-skinparam linetype ortho
+' skinparam linetype ortho
 skinparam roundcorner 10
 skinparam shadowing false
 skinparam class {
@@ -15,69 +15,109 @@ skinparam enum {
 }
 
 ' -----Application-----
-class "Hotale" as app <<Application>> {
-    /api/v1
-}
+class "Hotale" as app <<Application>>
+hide app methods
+hide app attributes
 ' -----Hotels-----
 class "Hotels" as hotels <<Resource>>{
-    - GET    /hotels
-    - POST   /hotels
+    + GET(QueryParam): Hotel
+    + POST(Hotel): Hotel
 }
 class "Hotel" as hotel <<Resource>>{
-    - GET    /hotels/{id}
-    - PUT    /hotels/{id}
-    - DELETE /hotels/{id}
+    + GET(): Hotel
+    + PUT(Hotel): Hotel
+    + PATCH(Hotel): Hotel
+    + DELETE(): void
 }
+class "Hotel" as hotelRp <<Representation>>{
+    - id: int
+    - name: String
+    - address: String
+    - telephone: String
+    - sizeEachDays: Int
+    - managerId: Int
+}
+hide hotels attributes
+hide hotel attributes
+hide hotelRp methods
 ' -----Authentication-----
 class "Authentication" as auth <<Resource>>{
-    + POST   /register
-    + POST   /login
-    + POST   /logout
+    + POST(User): Token
+    + POST(Credentials): Token
+    + DELETE(): void
 }
+class "Profile" as profile <<Resource>>{
+    + GET(): User
+    + PUT(User): User
+    + PATCH(User): User
+    + DELETE(): void
+}
+class "Credentials" as cred <<Representation>>{
+    + email: String
+    + password: String
+}
+class "TokenResponse" as token <<Representation>>{
+    - accessToken : String
+    - expireIn: Int
+}
+hide auth attributes
+hide profile attributes
+hide cred methods
+hide token methods
 ' -----Customers-----
 class "Customers" as customers <<Resource>>{
-    - GET    /customers
-    - POST   /customers
+    + GET(QueryParam): Customer
 }
 class "Customer" as customer <<Resource>>{
-    - GET    /customers/{id}
-    - PUT    /customers/{id}
-    - DELETE /customers/{id}
+    + GET(): Customer
+    + PUT(Customer): Customer
+    + PATCH(Customer): Customer
+    + DELETE(): void
 }
+class "Customer" as customerRp <<Representation>>
+hide customers attributes
+hide customer attributes
+hide customerRp attributes
+hide customerRp methods
 ' -----Managers-----
 class "Managers" as managers <<Resource>>{
-    - GET    /managers
-    - POST   /managers
+    + GET(QueryParam): Manager
 }
 class "Manager" as manager <<Resource>>{
-    - GET    /managers/{id}
-    - PUT    /managers/{id}
-    - DELETE /managers/{id}
+    + GET(): Manager
+    + PUT(Manager): Manager
+    + PATCH(Manager): Manager
+    + DELETE(): void
 }
-' -----Admins-----
-class "Admins" as admins <<Resource>>{
-
-}
-class "Admin" as admin <<Resource>>{
-
-}
+class "Manager" as managerRp <<Representation>>
+hide managers attributes
+hide manager attributes
+hide managerRp attributes
+hide managerRp methods
 ' -----Bookings-----
 class "Bookings" as bookings <<Resource>>{
-    - GET    /bookings
-    - POST   /bookings
-    ---
-    - GET    /customers/{id}/bookings
-    - POST   /customers/{id}/bookings
-    ---
-    - GET    /hotels/{id}/bookings
+    + GET(QueryParam): Booking
+    + POST(Booking): Booking
 }
 class "Booking" as booking <<Resource>>{
-    - GET    /bookings/{id}
-    - PUT    /bookings/{id}
-    - DELETE /bookings/{id}
+    + GET(): Booking
+    + PUT(Booking): Booking
+    + PATCH(Booking): Booking
+    + DELETE(): void
 }
-
-' -----Resources-----
+class "Booking" as bookingRp <<Representation>>{
+    - id: int
+    - checkIn: Date
+    - days : int
+    - createdAt: DateTime
+    - status : bookingStatus
+    - hotelId : int
+    - customerId : int
+}
+hide bookings attributes
+hide booking attributes
+hide bookingRp methods
+' -----Others-----
 class "User" as userRp <<Representation>>{
     - id: int
     - name: String
@@ -86,44 +126,61 @@ class "User" as userRp <<Representation>>{
     - password: String
     - role: UserRole
 }
-class "Manager" as managerRp <<Representation>>{
-    - ownedHotels : List<Hotel>
-}
+hide userRp methods
+class "Admin" as adminRp <<Representation>>
+hide adminRp attributes
+hide adminRp methods
 enum UserRole{
     CUSTOMER
     ADMIN
     HOTELMANAGER
 }
-class "Hotel" as hotelRp <<Representation>>{
-    - id: int
-    - name : String
-    - address : String
-    - telephone : String
-}
-class "Booking" as bookingRp <<Representation>>{
-    - id: int
-    - checkIn: Date
-    - checkOut: Date
-    - createdAt: DateTime
-}
-
-hide app attributes
-hide app methods
-hide userRp methods
-hide hotelRp methods
 hide UserRole methods
+enum BookingStatus{
+    RESERVED
+    CHECKIN
+    CHECKOUT
+    CANCEL
+}
+hide BookingStatus methods
 
-app ..> hotels : <<path>>\n /hotels
-hotels ..> hotel :  <<path>>\n /{id}
+' -----Paths-----
+app ..> hotels : <<path>>\n/hotels
+app ..> auth : <<path>>\n/auth
+app ..> customers : <<path>>\n/customers
+app ..> managers : <<path>>\n/managers
+app ..> bookings : <<path>>\n/bookings
+
+auth ..> profile : <<path>>\n/profile
+auth ..> userRp : <<use>>
+auth ..> cred : <<use>>
+auth ..> token : <<res>>
+
+customers ..> customer : <<path>>\n/{id}
+customer ..> customerRp : <<use>>
+customerRp --|> userRp : <<extended>> 
+
+managers ..> manager : <<path>>\n/{id}
+manager ..> managerRp : <<use>>
+managerRp --|> userRp : <<extended>>
+
+adminRp --|> userRp : <<extended>>
+
+profile ..> userRp : <<use>>
+
+hotels ..> hotel : <<path>>\n/{id}
 hotel ..> hotelRp : <<use>>
+hotelRp ..* managerRp : <<owns-a>>
 
-app ..> customers : <<path>>\n /customers
-customers ..> customer : <<path>>\n /{id}
-customer ..> user : <<use>>
-
-app ..> admins : <<path>>\n /admins
-
-app ..> bookings : <<path>>\n /bookings
-bookings ..> booking : <<path>>\n /bookings
+bookings ..> booking : <<path>>\n/{id}
 booking ..> bookingRp : <<use>>
+bookingRp ..* customerRp : <<owns-a>>
+bookingRp ..* hotelRp : <<owns-a>>
+' -----Nested Path-----
+manager ..> hotels : <<path>>\n/hotels
+profile ..> hotels : <<path>>\n/hotels
+
+customer ..> bookings : <<path>>\n/bookings
+profile ..> bookings : <<path>>\n/bookings
+hotel ..> bookings : <<path>>\n/bookings
 @enduml
