@@ -1,0 +1,129 @@
+@startuml
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam roundcorner 10
+skinparam shadowing false
+skinparam class {
+    BackgroundColor PaleGreen
+    ArrowColor SeaGreen
+    BorderColor SeaGreen
+}
+skinparam enum {
+    BackgroundColor LightCyan
+    BorderColor RoyalBlue
+}
+
+' -----Application-----
+class "Hotale" as app <<Application>> {
+    /api/v1
+}
+' -----Hotels-----
+class "Hotels" as hotels <<Resource>>{
+    - GET    /hotels
+    - POST   /hotels
+}
+class "Hotel" as hotel <<Resource>>{
+    - GET    /hotels/{id}
+    - PUT    /hotels/{id}
+    - DELETE /hotels/{id}
+}
+' -----Authentication-----
+class "Authentication" as auth <<Resource>>{
+    + POST   /register
+    + POST   /login
+    + POST   /logout
+}
+' -----Customers-----
+class "Customers" as customers <<Resource>>{
+    - GET    /customers
+    - POST   /customers
+}
+class "Customer" as customer <<Resource>>{
+    - GET    /customers/{id}
+    - PUT    /customers/{id}
+    - DELETE /customers/{id}
+}
+' -----Managers-----
+class "Managers" as managers <<Resource>>{
+    - GET    /managers
+    - POST   /managers
+}
+class "Manager" as manager <<Resource>>{
+    - GET    /managers/{id}
+    - PUT    /managers/{id}
+    - DELETE /managers/{id}
+}
+' -----Admins-----
+class "Admins" as admins <<Resource>>{
+
+}
+class "Admin" as admin <<Resource>>{
+
+}
+' -----Bookings-----
+class "Bookings" as bookings <<Resource>>{
+    - GET    /bookings
+    - POST   /bookings
+    ---
+    - GET    /customers/{id}/bookings
+    - POST   /customers/{id}/bookings
+    ---
+    - GET    /hotels/{id}/bookings
+}
+class "Booking" as booking <<Resource>>{
+    - GET    /bookings/{id}
+    - PUT    /bookings/{id}
+    - DELETE /bookings/{id}
+}
+
+' -----Resources-----
+class "User" as userRp <<Representation>>{
+    - id: int
+    - name: String
+    - telephone: String
+    - email: String
+    - password: String
+    - role: UserRole
+}
+class "Manager" as managerRp <<Representation>>{
+    - ownedHotels : List<Hotel>
+}
+enum UserRole{
+    CUSTOMER
+    ADMIN
+    HOTELMANAGER
+}
+class "Hotel" as hotelRp <<Representation>>{
+    - id: int
+    - name : String
+    - address : String
+    - telephone : String
+}
+class "Booking" as bookingRp <<Representation>>{
+    - id: int
+    - checkIn: Date
+    - checkOut: Date
+    - createdAt: DateTime
+}
+
+hide app attributes
+hide app methods
+hide userRp methods
+hide hotelRp methods
+hide UserRole methods
+
+app ..> hotels : <<path>>\n /hotels
+hotels ..> hotel :  <<path>>\n /{id}
+hotel ..> hotelRp : <<use>>
+
+app ..> customers : <<path>>\n /customers
+customers ..> customer : <<path>>\n /{id}
+customer ..> user : <<use>>
+
+app ..> admins : <<path>>\n /admins
+
+app ..> bookings : <<path>>\n /bookings
+bookings ..> booking : <<path>>\n /bookings
+booking ..> bookingRp : <<use>>
+@enduml
